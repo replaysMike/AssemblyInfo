@@ -25,7 +25,15 @@ namespace AssemblyInfo
 
         private AssemblyData InspectAssembly(string filename)
         {
-            var assembly = Assembly.LoadFrom(filename);
+            Assembly assembly;
+            try
+            {
+                assembly = Assembly.LoadFrom(filename);
+            }
+            catch (BadImageFormatException)
+            {
+                return null;
+            }
             var assemblyName = assembly.GetName();
             var version = assemblyName.Version;
             var fileVersion = FileVersionInfo.GetVersionInfo(assembly.Location);
@@ -45,7 +53,7 @@ namespace AssemblyInfo
             var targetFrameworkVersion = frameworkString
                 ?.Split(new string[] { "," }, System.StringSplitOptions.None)
                 // remove version label
-                ?.Skip(1).FirstOrDefault()?.Split(new string[] { "="}, System.StringSplitOptions.None)
+                ?.Skip(1).FirstOrDefault()?.Split(new string[] { "=" }, System.StringSplitOptions.None)
                 // remove v prepend
                 ?.Skip(1).FirstOrDefault()?.Replace("v", "");
             var metadata = assemblyMetadatas?.SelectMany(x => x.ConstructorArguments.Select(y => y.Value.ToString()));

@@ -19,25 +19,46 @@ namespace AssemblyInfo
             Options = options;
             InitializeComponent();
             BuildUIComponents();
-            if (string.IsNullOrEmpty(Options.Filename))
+            var filename = Options.Filename;
+            if (string.IsNullOrEmpty(filename))
             {
                 var result = openFileDialog1.ShowDialog(this);
                 if (result == DialogResult.OK)
                 {
-                    options.Filename = openFileDialog1.FileName;
-                    _assemblyData = inspector.Inspect(options.Filename);
-                    UpdateUI(_assemblyData);
+                    filename = openFileDialog1.FileName;
                 }
                 else
                 {
-                    Close();
+                    // close the application
+                    Load += (s, e) => Close();
+                    return;
                 }
             }
-            else
+            if (InspectAssembly(inspector, filename))
             {
-                _assemblyData = inspector.Inspect(options.Filename);
                 UpdateUI(_assemblyData);
             }
+        }
+
+        private bool InspectAssembly(AssemblyInspector inspector, string filename)
+        {
+            try
+            {
+                _assemblyData = inspector.Inspect(filename);
+                if (_assemblyData == null)
+                {
+                    MessageBox.Show($"File '{Path.GetFileName(filename)}' is not a valid assembly.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Load += (s, e) => Close();
+                    return false;
+                }
+            }
+            catch (FileNotFoundException)
+            {
+                MessageBox.Show($"File '{Path.GetFileName(filename)}' not found!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Load += (s, e) => Close();
+                return false;
+            }
+            return true;
         }
 
         private void BuildUIComponents()

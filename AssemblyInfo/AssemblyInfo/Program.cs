@@ -35,7 +35,23 @@ namespace AssemblyInfo
                         // console output
                         if (File.Exists(o.Filename))
                         {
-                            var assemblyData = inspector.Inspect(o.Filename);
+                            AssemblyData assemblyData;
+                            try
+                            {
+                                assemblyData = inspector.Inspect(o.Filename);
+                                if (assemblyData == null)
+                                {
+                                    Console.Error.WriteLine($"Error: File '{o.Filename}' is not a valid assembly.");
+                                    returnValue = -2;
+                                }
+                            }
+                            catch (FileNotFoundException)
+                            {
+                                Console.Error.WriteLine($"Error: Input file not found '{o.Filename}'");
+                                returnValue = -1;
+                                return;
+                            }
+                            
                             // output to stdout
                             var format = AssemblyDataFormatter.FormatterOutput.Parsable;
                             if (o.Pretty)
