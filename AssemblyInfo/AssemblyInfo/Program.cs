@@ -1,12 +1,16 @@
 ﻿using CommandLine;
 using System;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
 namespace AssemblyInfo
 {
     static class Program
     {
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool FreeConsole();
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
@@ -21,6 +25,7 @@ namespace AssemblyInfo
                     if (!o.Print)
                     {
                         // launch gui
+                        FreeConsole();
                         Application.EnableVisualStyles();
                         Application.SetCompatibleTextRenderingDefault(false);
                         Application.Run(new AssemlyInfoWindow(o, inspector));
