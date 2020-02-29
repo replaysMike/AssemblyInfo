@@ -12,7 +12,7 @@ Right-click on any assembly (dll, exe) and choose "Open with AssemblyInfo" to re
 
 # Screenshot
 
-![AnyConsole](https://github.com/replaysMike/AssemblyInfo/wiki/screenshot.png)
+![AssemblyInfo](https://github.com/replaysMike/AssemblyInfo/wiki/screenshot.png)
 
 ## Command-line usage
 
