@@ -28,9 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AssemlyInfoWindow));
             this.listInfo = new System.Windows.Forms.ListView();
-            this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
+            this.openFileDialog1 = new System.Windows.Forms.OpenFileDialog();
             this.SuspendLayout();
             // 
             // listInfo
@@ -39,32 +39,33 @@
             this.listInfo.HideSelection = false;
             this.listInfo.Location = new System.Drawing.Point(12, 12);
             this.listInfo.Name = "listInfo";
-            this.listInfo.Size = new System.Drawing.Size(406, 380);
+            this.listInfo.ShowItemToolTips = true;
+            this.listInfo.Size = new System.Drawing.Size(432, 487);
             this.listInfo.TabIndex = 0;
             this.listInfo.UseCompatibleStateImageBehavior = false;
             this.listInfo.View = System.Windows.Forms.View.Details;
             // 
-            // toolTip1
+            // openFileDialog1
             // 
-            this.toolTip1.AutomaticDelay = 250;
-            this.toolTip1.AutoPopDelay = 2500;
-            this.toolTip1.InitialDelay = 250;
-            this.toolTip1.ReshowDelay = 0;
-            this.toolTip1.ShowAlways = true;
+            this.openFileDialog1.DefaultExt = "*.dll;*.exe";
+            this.openFileDialog1.Filter = "Assemblies (*.dll;*.exe)|*.dll;*.exe|All files (*.*)|*.*";
+            this.openFileDialog1.Title = "Choose assembly";
             // 
             // AssemlyInfoWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(430, 404);
+            this.ClientSize = new System.Drawing.Size(456, 511);
             this.Controls.Add(this.listInfo);
             this.DoubleBuffered = true;
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "AssemlyInfoWindow";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Assembly Info";
+            this.Resize += new System.EventHandler(this.AssemlyInfoWindow_Resize);
             this.ResumeLayout(false);
 
         }
@@ -72,7 +73,7 @@
         #endregion
 
         private System.Windows.Forms.ListView listInfo;
-        private System.Windows.Forms.ToolTip toolTip1;
+        private System.Windows.Forms.OpenFileDialog openFileDialog1;
     }
 }
 

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product Id="*" Name="AssemblyInfo" Language="1033" Codepage="1252" Version="1.0.0.0" Manufacturer="Refactor Software" UpgradeCode="30d3e037-13d8-40b4-9cd5-ac36d54e376c">
+    <Package Id="*"
+             Keywords="Installer"
+            InstallerVersion="200" 
+            Compressed="yes" 
+            InstallScope="perMachine" 
+            Platform="x64"
+            Description="AssemblyInfo provides inspection of Windows assemblies"
+            Comments="Copyright 2020 Refactor Software"
+            Manufacturer="Refactor Software"
+            Languages="1033"
+            SummaryCodepage="1252"
+            />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of [ProductName] is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+    <Icon Id="AssemblyInfo_128.ico" SourceFile="$(var.AssemblyInfo.ProjectDir)AssemblyInfo_128.ico"/>
+    <Property Id="ARPPRODUCTICON" Value="AssemblyInfo_128.ico" />
+    <Feature Id="Complete"
+             Title="AssemblyInfo 1.0"
+             Description="AssemblyInfo application"
+             Level="1"
+             Display="expand"
+             ConfigurableDirectory="INSTALLFOLDER">
+      <Feature Id="ProductFeature" Title="AssemblyInfo Application" Description="AssemblyInfo application" Level="1">
+        <ComponentGroupRef Id="ProductComponents" />
+        <ComponentRef Id="ApplicationShortcut" />
+      </Feature>
+    </Feature>
+    <WixVariable Id="WixUIDialogBmp" Value="Dialog.bmp"/>
+    <WixVariable Id="WixUIBannerBmp" Value="Banner.bmp"/>
+    <WixVariable Id="WixUIInfoIco" Value="Info.bmp"/>
+    <UI Id='Mondo'>
+      <UIRef Id="WixUI_Mondo" />
+      <UIRef Id="WixUI_ErrorProgressText" />
+      <!-- skip license agreement -->
+      <Publish Dialog="WelcomeDlg" Control="Next" Event="NewDialog" Value="SetupTypeDlg" Order="3">1</Publish>
+      <Publish Dialog="SetupTypeDlg" Control="Back" Event="NewDialog" Value="WelcomeDlg" Order="3">1</Publish>
+    </UI>
+  </Product>
+
+  <Fragment>
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLFOLDER" Name="AssemblyInfo" />
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ApplicationProgramsFolder" Name="AssemblyInfo"/>
+      </Directory>
+    </Directory>
+  </Fragment>
+
+  <Fragment>
+    <DirectoryRef Id="ApplicationProgramsFolder">
+      <Component Id="ApplicationShortcut" Guid="10dccc3d-5e68-4685-a4c1-94c44188fdd6">
+        <Shortcut Id="ApplicationStartMenuShortcut"
+                  Name="Assembly Info"
+                  Description="Assembly inspection utility"
+                  Target="[#AssemblyInfoEXE]"
+                  WorkingDirectory="APPLICATIONROOTDIRECTORY"
+                  Icon="AssemblyInfo_128.ico"
+                  />
+        <RemoveFolder Id="CleanUpShortCut" Directory="ApplicationProgramsFolder" On="uninstall"/>
+        <RegistryValue Root="HKCU" Key="Software\RefactorSoftware\AssemblyInfo" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+        <RegistryValue Root="HKCR" Key="*\shell\AssemblyInfo" Type="string" Value="Open with Assembly&amp;Info" Action="write" />
+        <RegistryValue Root="HKCR" Key="*\shell\AssemblyInfo\command" Type="string" Value="&quot;[#AssemblyInfoEXE]&quot; --filename &quot;%1&quot;" Action="write" />
+        <RegistryValue Root="HKCR" Key="*\shell\AssemblyInfo" Name="icon" Type="string" Value="[#AssemblyInfoEXE]" Action="write" />
+      </Component>
+    </DirectoryRef>
+  </Fragment>
+
+  <Fragment>
+    <ComponentGroup Id="ProductComponents" Directory="INSTALLFOLDER">
+      <Component Id="AssemblyInfo" Guid="10dccc3d-5e68-4685-a4c1-94c44188fdd4" Win64="yes">
+        <File Id="AssemblyInfoEXE" Name="AssemblyInfo.exe" Source="$(var.AssemblyInfo.TargetDir)\AssemblyInfo.exe" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64" />
+      </Component>
+      <Component Id="CommandLineLibrary" Guid="a1b52bdc-d261-444b-b055-5a1fcbb435cb" Win64="yes">
+        <File Id="CommandLineDLL" Name="CommandLine.dll" Source="$(var.AssemblyInfo.TargetDir)\CommandLine.dll" KeyPath="yes" ProcessorArchitecture="x64" />
+      </Component>
+    </ComponentGroup>
+  </Fragment>
+</Wix>
