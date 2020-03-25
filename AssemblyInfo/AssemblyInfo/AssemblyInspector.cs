@@ -1,13 +1,4 @@
 ﻿using AssemblyInfo.Extensions;
-using MetadataExtractor;
-using MetadataExtractor.Formats.Bmp;
-using MetadataExtractor.Formats.Exif;
-using MetadataExtractor.Formats.FileType;
-using MetadataExtractor.Formats.Gif;
-using MetadataExtractor.Formats.Iptc;
-using MetadataExtractor.Formats.Jpeg;
-using MetadataExtractor.Formats.Png;
-using MetadataExtractor.Formats.QuickTime;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -60,7 +51,7 @@ namespace AssemblyInfo
                     case ".qt":
                     case ".mpeg":
                     case ".m4v":
-                        return InspectImage(filename);
+                        return new MediaInspector().InspectMedia(InspectFile(filename), filename);
                     default:
                         assembly = Assembly.LoadFrom(filename);
                         break;
@@ -76,49 +67,6 @@ namespace AssemblyInfo
             }
 
             return InspectAssembly(assembly);
-        }
-
-        private AssemblyData InspectImage(string filename)
-        {
-            var data = InspectFile(filename);
-            var sb = new StringBuilder();
-            var directories = ImageMetadataReader.ReadMetadata(filename);
-            var subIfdDirectory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
-            var dateTime = subIfdDirectory?.GetDescription(ExifDirectoryBase.TagDateTime);
-            var creditDirectory = directories.OfType<IptcDirectory>().FirstOrDefault();
-            var credit = creditDirectory?.GetDescription(IptcDirectory.TagCredit);
-            var types = directories.Select(x => x.GetType()).ToList();
-            var movieHeaderDirectory = (MetadataExtractor.Directory)directories.OfType<QuickTimeMovieHeaderDirectory>().Where(x => x.Name == "QuickTime Movie Header").FirstOrDefault();
-            var fileTypeDirectory = (MetadataExtractor.Directory)directories.OfType<FileTypeDirectory>().Where(x => x.Name == "File Type").FirstOrDefault();
-            var codec = fileTypeDirectory?.Tags.Where(x => x.Name == "Detected File Type Name").Select(x => x.Description).FirstOrDefault();
-            var durationTime = movieHeaderDirectory?.Tags.Where(x => x.Name == "Duration").Select(x => x.Description).FirstOrDefault();
-            var createdOn = movieHeaderDirectory?.Tags.Where(x => x.Name == "Created").Select(x => x.Description).FirstOrDefault();
-            var dimensionDirectory = (MetadataExtractor.Directory)directories.OfType<PngDirectory>().Where(x => x.Name == "PNG-IHDR").FirstOrDefault()
-                ?? (MetadataExtractor.Directory)directories.OfType<JpegDirectory>().Where(x => x.Name == "JPEG").FirstOrDefault()
-                ?? (MetadataExtractor.Directory)directories.OfType<GifHeaderDirectory>().Where(x => x.Name == "GIF Header").FirstOrDefault()
-                ?? (MetadataExtractor.Directory)directories.OfType<BmpHeaderDirectory>().Where(x => x.Name == "BMP Header").FirstOrDefault()
-                ?? (MetadataExtractor.Directory)directories.OfType<QuickTimeTrackHeaderDirectory>().Where(x => x.Name == "QuickTime Track Header").FirstOrDefault();
-            var width = dimensionDirectory?.Tags.Where(x => x.Name == "Image Width").Select(x => x.Description).FirstOrDefault()
-                ?? dimensionDirectory?.Tags.Where(x => x.Name == "Width").Select(x => x.Description).FirstOrDefault();
-            var height = dimensionDirectory?.Tags.Where(x => x.Name == "Image Height").Select(x => x.Description).FirstOrDefault()
-                ?? dimensionDirectory?.Tags.Where(x => x.Name == "Height").Select(x => x.Description).FirstOrDefault();
-            var dimensions = $"{width} x {height}";
-            var duration = $"{durationTime}";
-            foreach (var directory in directories)
-            {
-                foreach(var tag in directory.Tags)
-                {
-                    sb.AppendLine($"[{directory.Name}] {tag.Name}={tag.Description}");
-                }
-            }
-            data.Metadata = sb.ToString();
-            data.InformationalVersion = dateTime?.ToString();
-            data.Copyright = credit;
-            data.ProductName = dimensions;
-            data.FileDescription = duration;
-            data.Description = createdOn;
-            data.InformationalVersion = codec;
-            return data;
         }
 
         private AssemblyData InspectMsi(string filename)
@@ -263,17 +211,17 @@ namespace AssemblyInfo
             using (var sha = SHA256.Create())
             {
                 var sha256Hash = sha.ComputeHash(bytes);
-                data.Sha256 = AssemblyInfo.Extensions.ByteConverter.ToHex(sha256Hash);
+                data.Sha256 = AssemblyInfo.Extensions.ByteConverter.ToHex(sha256Hash).ToUpper();
             }
             using (var sha = SHA1.Create())
             {
                 var shaHash = sha.ComputeHash(bytes);
-                data.Sha = AssemblyInfo.Extensions.ByteConverter.ToHex(shaHash);
+                data.Sha = AssemblyInfo.Extensions.ByteConverter.ToHex(shaHash).ToUpper();
             }
             using (var md5 = MD5.Create())
             {
                 var md5Hash = md5.ComputeHash(bytes);
-                data.Md5 = AssemblyInfo.Extensions.ByteConverter.ToHex(md5Hash);
+                data.Md5 = AssemblyInfo.Extensions.ByteConverter.ToHex(md5Hash).ToUpper();
             }
         }
     }

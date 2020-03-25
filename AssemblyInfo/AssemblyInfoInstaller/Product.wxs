@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
-  <Product Id="*" Name="AssemblyInfo" Language="1033" Codepage="1252" Version="1.0.0.0" Manufacturer="Refactor Software" UpgradeCode="30d3e037-13d8-40b4-9cd5-ac36d54e376c">
+  <Product Id="*" Name="AssemblyInfo" Language="1033" Codepage="1252" Version="1.1.0.0" Manufacturer="Refactor Software" UpgradeCode="30d3e037-13d8-40b4-9cd5-ac36d54e376c">
     <Package Id="*"
              Keywords="Installer"
             InstallerVersion="200" 
@@ -19,7 +19,7 @@
     <Icon Id="AssemblyInfo_128.ico" SourceFile="$(var.AssemblyInfo.ProjectDir)AssemblyInfo_128.ico"/>
     <Property Id="ARPPRODUCTICON" Value="AssemblyInfo_128.ico" />
     <Feature Id="Complete"
-             Title="AssemblyInfo 1.0"
+             Title="AssemblyInfo 1.1"
              Description="AssemblyInfo application"
              Level="1"
              Display="expand"

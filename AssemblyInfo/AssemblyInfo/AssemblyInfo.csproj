@@ -97,6 +97,7 @@
     <Compile Include="Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="MediaInspector.cs" />
     <EmbeddedResource Include="AssemlyInfoWindow.resx">
       <DependentUpon>AssemlyInfoWindow.cs</DependentUpon>
     </EmbeddedResource>
