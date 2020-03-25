@@ -40,22 +40,22 @@
             this.listInfo.Location = new System.Drawing.Point(12, 12);
             this.listInfo.Name = "listInfo";
             this.listInfo.ShowItemToolTips = true;
-            this.listInfo.Size = new System.Drawing.Size(432, 487);
+            this.listInfo.Size = new System.Drawing.Size(432, 507);
             this.listInfo.TabIndex = 0;
             this.listInfo.UseCompatibleStateImageBehavior = false;
             this.listInfo.View = System.Windows.Forms.View.Details;
             // 
             // openFileDialog1
             // 
-            this.openFileDialog1.DefaultExt = "*.dll;*.exe";
-            this.openFileDialog1.Filter = "Assemblies (*.dll;*.exe)|*.dll;*.exe|All files (*.*)|*.*";
+            this.openFileDialog1.DefaultExt = "*.dll;*.exe;*.msi";
+            this.openFileDialog1.Filter = "Assemblies (*.dll;*.exe;*.msi;*.com)|*.dll;*.exe;*.msi;*.com|All files (*.*)|*.*";
             this.openFileDialog1.Title = "Choose assembly";
             // 
             // AssemlyInfoWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(456, 511);
+            this.ClientSize = new System.Drawing.Size(456, 531);
             this.Controls.Add(this.listInfo);
             this.DoubleBuffered = true;
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.SizableToolWindow;

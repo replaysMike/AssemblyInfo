@@ -1,11 +1,20 @@
 ﻿using AssemblyInfo.Extensions;
+using MetadataExtractor;
+using MetadataExtractor.Formats.Bmp;
+using MetadataExtractor.Formats.Exif;
+using MetadataExtractor.Formats.Gif;
+using MetadataExtractor.Formats.Iptc;
+using MetadataExtractor.Formats.Jpeg;
+using MetadataExtractor.Formats.Png;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace AssemblyInfo
 {
@@ -25,15 +34,149 @@ namespace AssemblyInfo
 
         private AssemblyData InspectAssembly(string filename)
         {
+            var fileExtension = Path.GetExtension(filename);
             Assembly assembly;
             try
             {
-                assembly = Assembly.LoadFrom(filename);
+                switch (fileExtension)
+                {
+                    case ".msi":
+                        return InspectMsi(filename);
+                    case ".jpg":
+                    case ".jpeg":
+                    case ".gif":
+                    case ".bmp":
+                    case ".png":
+                    case ".ico":
+                    case ".pcx":
+                    case ".webp":
+                    case ".psd":
+                    case ".xmp":
+                        return InspectImage(filename);
+                    default:
+                        assembly = Assembly.LoadFrom(filename);
+                        break;
+                }               
             }
-            catch (BadImageFormatException)
+            catch (FileLoadException ex)
             {
-                return null;
+                return InspectFile(filename);
             }
+            catch (BadImageFormatException ex)
+            {
+                return InspectFile(filename);
+            }
+
+            return InspectAssembly(assembly);
+        }
+
+        private AssemblyData InspectImage(string filename)
+        {
+            var data = InspectFile(filename);
+            var sb = new StringBuilder();
+            var directories = ImageMetadataReader.ReadMetadata(filename);
+            var subIfdDirectory = directories.OfType<ExifSubIfdDirectory>().FirstOrDefault();
+            var dateTime = subIfdDirectory?.GetDescription(ExifDirectoryBase.TagDateTime);
+            var creditDirectory = directories.OfType<IptcDirectory>().FirstOrDefault();
+            var credit = creditDirectory?.GetDescription(IptcDirectory.TagCredit);
+            var types = directories.Select(x => x.GetType()).ToList();
+            var dimensionDirectory = (MetadataExtractor.Directory)directories.OfType<PngDirectory>().Where(x => x.Name == "PNG-IHDR").FirstOrDefault()
+                ?? (MetadataExtractor.Directory)directories.OfType<JpegDirectory>().Where(x => x.Name == "JPEG").FirstOrDefault()
+                ?? (MetadataExtractor.Directory)directories.OfType<GifHeaderDirectory>().Where(x => x.Name == "GIF Header").FirstOrDefault()
+                ?? (MetadataExtractor.Directory)directories.OfType<BmpHeaderDirectory>().Where(x => x.Name == "BMP Header").FirstOrDefault();
+            var width = dimensionDirectory?.Tags.Where(x => x.Name == "Image Width").Select(x => x.Description).FirstOrDefault();
+            var height = dimensionDirectory?.Tags.Where(x => x.Name == "Image Height").Select(x => x.Description).FirstOrDefault();
+            var dimensions = $"{width} x {height}";
+            foreach (var directory in directories)
+            {
+                foreach(var tag in directory.Tags)
+                {
+                    sb.AppendLine($"[{directory.Name}] {tag.Name}={tag.Description}");
+                }
+            }
+            data.Metadata = sb.ToString();
+            data.InformationalVersion = dateTime?.ToString();
+            data.Copyright = credit;
+            data.ProductName = dimensions;
+            return data;
+        }
+
+        private AssemblyData InspectMsi(string filename)
+        {
+            var data = InspectFile(filename);
+            var inspector = new MsiInspector();
+            var allProperties = new Dictionary<string, List<Dictionary<int, string>>>();
+            var tables = inspector.GetAllProperties(filename, "_Tables");
+            foreach (var table in tables)
+            {
+                var tableName = table.Values.Skip(1).First().ToString();
+                allProperties.Add(tableName, inspector.GetAllProperties(filename, tableName));
+            }
+            var streams = inspector.GetAllProperties(filename, "_Streams");
+            var storages = inspector.GetAllProperties(filename, "_Storages");
+            var transformView = inspector.GetAllProperties(filename, "_TransformView");
+            var properties = allProperties.Where(x => x.Key == "Property").Select(x => x.Value).FirstOrDefault();
+
+            data.Version = GetProperty(properties, "ProductVersion");
+            data.Name = GetProperty(properties, "ProductName");
+            data.ProductName = GetProperty(properties, "ProductName");
+            data.Company = GetProperty(properties, "Manufacturer");
+            data.Metadata = GetAllMetadata(allProperties);
+            return data;
+        }
+
+        private string GetAllMetadata(Dictionary<string, List<Dictionary<int, string>>> data)
+        {
+            var sb = new StringBuilder();
+            foreach (var row in data)
+            {
+                sb.AppendLine(row.Key);
+                sb.AppendLine($"----------------------");
+                foreach (var prop in row.Value)
+                    sb.AppendLine(string.Join(",", prop.Values));
+                sb.AppendLine();
+            }
+
+            return sb.ToString();
+        }
+
+        private string GetProperty(List<Dictionary<int, string>> properties, string name)
+        {
+            return properties.Select(x => x.Values).FirstOrDefault(x => x.Skip(1).FirstOrDefault() == name).Skip(2).FirstOrDefault();
+        }
+
+        private AssemblyData InspectFile(string filename)
+        {
+            var fileInfo = new FileInfo(filename);
+            var fileVersion = FileVersionInfo.GetVersionInfo(filename);
+            var data = new AssemblyData
+            {
+                Name = Path.GetFileName(filename),
+                Filename = Path.GetFileName(filename),
+                ProductName = fileVersion.ProductName,
+                FileDescription = fileVersion.FileDescription,
+                Description = fileVersion.Comments,
+                Company = fileVersion.CompanyName,
+                FileVersion = fileVersion.FileVersion,
+                ProductVersion = fileVersion.ProductVersion,
+                Copyright = fileVersion.LegalCopyright,
+                IsDebug = fileVersion.IsDebug,
+                IsPatched = fileVersion.IsPatched,
+                IsPreRelease = fileVersion.IsPreRelease,
+                Language = fileVersion.Language,
+                OriginalFilename = fileVersion.OriginalFilename,
+                FileSize = Util.BytesToString(fileInfo.Length),
+                FileLength = fileInfo.Length,
+                FullPath = filename
+            };
+            if (fileInfo.Length < MaxHashInspectionLength)
+                ComputeHash(data, filename);
+            return data;
+        }
+
+        private AssemblyData InspectAssembly(Assembly assembly)
+        {
+            var fileInfo = new FileInfo(assembly.Location);
             var assemblyName = assembly.GetName();
             var version = assemblyName.Version;
             var fileVersion = FileVersionInfo.GetVersionInfo(assembly.Location);
@@ -44,7 +187,6 @@ namespace AssemblyInfo
             var assemblyMetadatas = assembly.CustomAttributes.Where(x => x.AttributeType == typeof(AssemblyMetadataAttribute)).ToList();
             var debuggable = assembly.CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(DebuggableAttribute));
             var debuggableAttributeArguments = debuggable.ConstructorArguments.FirstOrDefault();
-            var fileInfo = new FileInfo(filename);
 
             var frameworkString = targetFramework?.ConstructorArguments?.FirstOrDefault().Value.ToString();
             var targetFrameworkName = frameworkString
@@ -62,6 +204,7 @@ namespace AssemblyInfo
             var data = new AssemblyData
             {
                 Name = assembly.FullName,
+                Filename = Path.GetFileName(assembly.Location),
                 ProductName = fileVersion.ProductName,
                 FileDescription = fileVersion.FileDescription,
                 Description = fileVersion.Comments,
@@ -85,11 +228,12 @@ namespace AssemblyInfo
                 Language = fileVersion.Language,
                 OriginalFilename = fileVersion.OriginalFilename,
                 FileSize = Util.BytesToString(fileInfo.Length),
-                FileLength = fileInfo.Length
+                FileLength = fileInfo.Length,
+                FullPath = assembly.Location
             };
 
             if (data.FileLength < MaxHashInspectionLength)
-                ComputeHash(data, filename);
+                ComputeHash(data, assembly.Location);
             return data;
         }
 
@@ -97,6 +241,11 @@ namespace AssemblyInfo
         {
             var bytes = File.ReadAllBytes(filename);
             using (var sha = SHA256.Create())
+            {
+                var sha256Hash = sha.ComputeHash(bytes);
+                data.Sha256 = AssemblyInfo.Extensions.ByteConverter.ToHex(sha256Hash);
+            }
+            using (var sha = SHA1.Create())
             {
                 var shaHash = sha.ComputeHash(bytes);
                 data.Sha = AssemblyInfo.Extensions.ByteConverter.ToHex(shaHash);

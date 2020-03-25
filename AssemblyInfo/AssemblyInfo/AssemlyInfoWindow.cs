@@ -95,6 +95,7 @@ namespace AssemblyInfo
                 new ListViewItem(new string[] { "Language", "" }),
                 new ListViewItem(new string[] { "OriginalFilename", "" }),
                 new ListViewItem(new string[] { "FileSize", "" }),
+                new ListViewItem(new string[] { "SHA256", "" }),
                 new ListViewItem(new string[] { "SHA", "" }),
                 new ListViewItem(new string[] { "MD5", "" }),
                 new ListViewItem(new string[] { "Path", "" }),
@@ -118,7 +119,7 @@ namespace AssemblyInfo
 
         private void UpdateUI(AssemblyData assemblyData)
         {
-            Text = $"Assembly Info - {Path.GetFileName(Options.Filename)}";
+            Text = $"Assembly Info - {assemblyData.Filename}";
             listInfo.Items[0].SubItems[1].Text = assemblyData.Name;
             listInfo.Items[1].SubItems[1].Text = assemblyData.ProductName;
             listInfo.Items[2].SubItems[1].Text = assemblyData.FileDescription;
@@ -140,12 +141,13 @@ namespace AssemblyInfo
             listInfo.Items[18].SubItems[1].Text = assemblyData.Language;
             listInfo.Items[19].SubItems[1].Text = assemblyData.OriginalFilename;
             listInfo.Items[20].SubItems[1].Text = assemblyData.FileSize;
-            listInfo.Items[21].SubItems[1].Text = assemblyData.Sha;
-            listInfo.Items[22].SubItems[1].Text = assemblyData.Md5;
-            listInfo.Items[23].SubItems[1].Text = Path.GetDirectoryName(Options.Filename);
-            listInfo.Items[24].SubItems[1].Text = $"{assemblyData.IsClsCompliant}";
-            listInfo.Items[25].SubItems[1].Text = assemblyData.InformationalVersion;
-            listInfo.Items[26].SubItems[1].Text = assemblyData.Metadata;
+            listInfo.Items[21].SubItems[1].Text = assemblyData.Sha256;
+            listInfo.Items[22].SubItems[1].Text = assemblyData.Sha;
+            listInfo.Items[23].SubItems[1].Text = assemblyData.Md5;
+            listInfo.Items[24].SubItems[1].Text = Path.GetDirectoryName(assemblyData.FullPath);
+            listInfo.Items[25].SubItems[1].Text = $"{assemblyData.IsClsCompliant}";
+            listInfo.Items[26].SubItems[1].Text = assemblyData.InformationalVersion;
+            listInfo.Items[27].SubItems[1].Text = assemblyData.Metadata;
         }
 
         private void AssemlyInfoWindow_Resize(object sender, EventArgs e)

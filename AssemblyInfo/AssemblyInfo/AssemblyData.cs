@@ -24,12 +24,14 @@
         public string OriginalFilename { get; set; }
         public string FileSize { get; set; }
         public long FileLength { get; set; }
+        public string Sha256 { get; set; }
         public string Sha { get; set; }
         public string Md5 { get; set; }
         public bool IsClsCompliant { get; set; }
         public string InformationalVersion { get; set; }
         public string Metadata { get; set; }
-
+        public string FullPath { get; set; }
+        public string Filename { get; set; }
         public override string ToString() => Name;
     }
 }
