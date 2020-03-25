@@ -44,6 +44,7 @@
             this.listInfo.TabIndex = 0;
             this.listInfo.UseCompatibleStateImageBehavior = false;
             this.listInfo.View = System.Windows.Forms.View.Details;
+            this.listInfo.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.listInfo_MouseDoubleClick);
             // 
             // openFileDialog1
             // 

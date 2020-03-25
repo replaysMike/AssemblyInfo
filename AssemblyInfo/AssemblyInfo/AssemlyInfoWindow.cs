@@ -156,5 +156,14 @@ namespace AssemblyInfo
             listInfo.Height = Height - 60;
             listInfo.Columns[1].Width = listInfo.Width - 120;
         }
+
+        private void listInfo_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (listInfo.SelectedItems.Count == 0)
+                return;
+            var selected = listInfo.SelectedItems[0].SubItems[1];
+            var inspectionWindow = new InspectionWindow(listInfo.SelectedItems[0].Text, selected.Text);
+            inspectionWindow.ShowDialog(this);
+        }
     }
 }

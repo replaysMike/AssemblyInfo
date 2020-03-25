@@ -87,12 +87,21 @@
     </Compile>
     <Compile Include="Extensions\ByteConverter.cs" />
     <Compile Include="Extensions\Util.cs" />
+    <Compile Include="InspectionWindow.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="InspectionWindow.Designer.cs">
+      <DependentUpon>InspectionWindow.cs</DependentUpon>
+    </Compile>
     <Compile Include="MsiInspector.cs" />
     <Compile Include="Options.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="AssemlyInfoWindow.resx">
       <DependentUpon>AssemlyInfoWindow.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="InspectionWindow.resx">
+      <DependentUpon>InspectionWindow.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
