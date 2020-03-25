@@ -16,6 +16,7 @@ Right-click on any assembly (dll, exe) and choose "Open with AssemblyInfo" to re
 * Inspect any image (.png, .jpg, .bmp, .gif, etc)
 * Inspect any video (.mp4, .mov, .avi etc)
 * Provides information on strong typing, versions, checksums, metadata
+* Adds to Windows right-click context menu on any file
 
 # Screenshot
 
