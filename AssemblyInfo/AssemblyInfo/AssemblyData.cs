@@ -2,6 +2,12 @@
 {
     public class AssemblyData
     {
+        public AssemblyData() { }
+        public AssemblyData(string message)
+        {
+            Messages = message;
+        }
+
         public string Name { get; set; }
         public string ProductName { get; set; }
         public string FileDescription { get; set; }
@@ -32,6 +38,15 @@
         public string Metadata { get; set; }
         public string FullPath { get; set; }
         public string Filename { get; set; }
+        public string Dependencies { get; set; }
+        public string DeclaredTypes { get; set; }
+        public string EmbeddedResources { get; set; }
+
+        /// <summary>
+        /// Warnings and Errors
+        /// </summary>
+        public string Messages { get; set; }
+
         public override string ToString() => Name;
     }
 }

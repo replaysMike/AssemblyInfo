@@ -11,6 +11,7 @@ using System.Text;
 
 namespace AssemblyInfo
 {
+    [Serializable]
     public class AssemblyInspector
     {
         /// <summary>
@@ -18,8 +19,12 @@ namespace AssemblyInfo
         /// </summary>
         private const int MaxHashInspectionLength = 1 * 1024 * 1024 * 1024;
 
+        private List<Assembly> ResolvedAssemblies = new List<Assembly>();
+        private string _filename = string.Empty;
+
         public AssemblyData Inspect(string filename)
         {
+            _filename = filename;
             if (File.Exists(filename))
                 return InspectAssembly(filename);
             throw new FileNotFoundException(filename);
@@ -28,13 +33,13 @@ namespace AssemblyInfo
         private AssemblyData InspectAssembly(string filename)
         {
             var fileExtension = Path.GetExtension(filename).ToLower();
-            Assembly assembly;
+            Assembly assembly = null;
             try
             {
                 switch (fileExtension)
                 {
                     case ".msi":
-                        return InspectMsi(filename);
+                        return InspectMsi(filename, new AssemblyData());
                     case ".jpg":
                     case ".jpeg":
                     case ".gif":
@@ -51,27 +56,54 @@ namespace AssemblyInfo
                     case ".qt":
                     case ".mpeg":
                     case ".m4v":
-                        return new MediaInspector().InspectMedia(InspectFile(filename), filename);
+                        return new MediaInspector().InspectMedia(InspectFile(filename, new AssemblyData()), filename);
                     default:
+                        AppDomain.CurrentDomain.AssemblyLoad += CurrentDomain_AssemblyLoad;
+                        AppDomain.CurrentDomain.AssemblyResolve += CurrentDomain_AssemblyResolve;
                         assembly = Assembly.LoadFrom(filename);
                         break;
-                }               
+                }
             }
             catch (FileLoadException ex)
             {
-                return InspectFile(filename);
+                return InspectFile(filename, new AssemblyData($"Could not load file! {ex.Message}"));
             }
             catch (BadImageFormatException ex)
             {
-                return InspectFile(filename);
+                return InspectFile(filename, new AssemblyData($"Unknown assembly type. {ex.Message}"));
             }
 
-            return InspectAssembly(assembly);
+            return InspectAssembly(assembly, new AssemblyData());
         }
 
-        private AssemblyData InspectMsi(string filename)
+        private void CurrentDomain_AssemblyLoad(object sender, AssemblyLoadEventArgs args)
         {
-            var data = InspectFile(filename);
+            if (!ResolvedAssemblies.Contains(args.LoadedAssembly))
+                ResolvedAssemblies.Add(args.LoadedAssembly);
+        }
+
+        private Assembly CurrentDomain_AssemblyResolve(object sender, ResolveEventArgs args)
+        {
+            if (args.Name.Contains(".resources"))
+                return null;
+            if (ResolvedAssemblies.Any(x => x.FullName == args.Name))
+                return ResolvedAssemblies.FirstOrDefault(x => x.FullName.Equals(args.Name));
+            var tokens = args.Name.Split(",".ToCharArray());
+            var assemblyFile = Path.Combine(new string[] { Path.GetDirectoryName(_filename), tokens[0] + ".dll" });
+            System.Diagnostics.Debug.WriteLine("Resolving : " + args.Name);
+            Assembly assembly;
+            if (File.Exists(assemblyFile))
+            {
+                assembly = Assembly.LoadFile(assemblyFile);
+                ResolvedAssemblies.Add(assembly);
+                return assembly;
+            }
+            return null;
+        }
+
+        private AssemblyData InspectMsi(string filename, AssemblyData assemblyData)
+        {
+            var data = InspectFile(filename, assemblyData);
             var inspector = new MsiInspector();
             var allProperties = new Dictionary<string, List<Dictionary<int, string>>>();
             var tables = inspector.GetAllProperties(filename, "_Tables");
@@ -113,36 +145,35 @@ namespace AssemblyInfo
             return properties.Select(x => x.Values).FirstOrDefault(x => x.Skip(1).FirstOrDefault() == name).Skip(2).FirstOrDefault();
         }
 
-        private AssemblyData InspectFile(string filename)
+        private AssemblyData InspectFile(string filename, AssemblyData assemblyData)
         {
             var fileInfo = new FileInfo(filename);
             var fileVersion = FileVersionInfo.GetVersionInfo(filename);
-            var data = new AssemblyData
-            {
-                Name = Path.GetFileName(filename),
-                Filename = Path.GetFileName(filename),
-                ProductName = fileVersion.ProductName,
-                FileDescription = fileVersion.FileDescription,
-                Description = fileVersion.Comments,
-                Company = fileVersion.CompanyName,
-                FileVersion = fileVersion.FileVersion,
-                ProductVersion = fileVersion.ProductVersion,
-                Copyright = fileVersion.LegalCopyright,
-                IsDebug = fileVersion.IsDebug,
-                IsPatched = fileVersion.IsPatched,
-                IsPreRelease = fileVersion.IsPreRelease,
-                Language = fileVersion.Language,
-                OriginalFilename = fileVersion.OriginalFilename,
-                FileSize = Util.BytesToString(fileInfo.Length),
-                FileLength = fileInfo.Length,
-                FullPath = filename
-            };
+
+            assemblyData.Name = Path.GetFileName(filename);
+            assemblyData.Filename = Path.GetFileName(filename);
+            assemblyData.ProductName = fileVersion.ProductName;
+            assemblyData.FileDescription = fileVersion.FileDescription;
+            assemblyData.Description = fileVersion.Comments;
+            assemblyData.Company = fileVersion.CompanyName;
+            assemblyData.FileVersion = fileVersion.FileVersion;
+            assemblyData.ProductVersion = fileVersion.ProductVersion;
+            assemblyData.Copyright = fileVersion.LegalCopyright;
+            assemblyData.IsDebug = fileVersion.IsDebug;
+            assemblyData.IsPatched = fileVersion.IsPatched;
+            assemblyData.IsPreRelease = fileVersion.IsPreRelease;
+            assemblyData.Language = fileVersion.Language;
+            assemblyData.OriginalFilename = fileVersion.OriginalFilename;
+            assemblyData.FileSize = Util.BytesToString(fileInfo.Length);
+            assemblyData.FileLength = fileInfo.Length;
+            assemblyData.FullPath = filename;
+
             if (fileInfo.Length < MaxHashInspectionLength)
-                ComputeHash(data, filename);
-            return data;
+                ComputeHash(assemblyData, filename);
+            return assemblyData;
         }
 
-        private AssemblyData InspectAssembly(Assembly assembly)
+        private AssemblyData InspectAssembly(Assembly assembly, AssemblyData assemblyData)
         {
             var fileInfo = new FileInfo(assembly.Location);
             var assemblyName = assembly.GetName();
@@ -154,7 +185,7 @@ namespace AssemblyInfo
             var assemblyInformationalVersion = assembly.CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(AssemblyInformationalVersionAttribute));
             var assemblyMetadatas = assembly.CustomAttributes.Where(x => x.AttributeType == typeof(AssemblyMetadataAttribute)).ToList();
             var debuggable = assembly.CustomAttributes.FirstOrDefault(x => x.AttributeType == typeof(DebuggableAttribute));
-            var debuggableAttributeArguments = debuggable.ConstructorArguments.FirstOrDefault();
+            var debuggableAttributeArguments = debuggable?.ConstructorArguments.FirstOrDefault();
 
             var frameworkString = targetFramework?.ConstructorArguments?.FirstOrDefault().Value.ToString();
             var targetFrameworkName = frameworkString
@@ -169,40 +200,99 @@ namespace AssemblyInfo
             var metadata = assemblyMetadatas?.SelectMany(x => x.ConstructorArguments.Select(y => y.Value.ToString()));
             var metadataKeys = metadata?.Where((x, i) => i % 2 == 0).ToList();
             var metadataValues = metadata?.Skip(1).Where((x, i) => i % 2 == 0).ToList();
-            var data = new AssemblyData
+            var declaredTypes = string.Empty;
+            try
             {
-                Name = assembly.FullName,
-                Filename = Path.GetFileName(assembly.Location),
-                ProductName = fileVersion.ProductName,
-                FileDescription = fileVersion.FileDescription,
-                Description = fileVersion.Comments,
-                Company = fileVersion.CompanyName,
-                Version = version.ToString(),
-                FileVersion = fileVersion.FileVersion,
-                ProductVersion = fileVersion.ProductVersion,
-                IsClsCompliant = (bool?)clsCompliant?.ConstructorArguments?.FirstOrDefault().Value ?? false,
-                InformationalVersion = assemblyInformationalVersion?.ConstructorArguments?.FirstOrDefault().Value.ToString(),
-                Metadata = string.Join(",", metadataKeys.Select((x, i) => $"{x}={metadataValues[i].ToString()}")),
-                IsStronglyNamed = assemblyName.GetPublicKeyToken().Length > 0,
-                PublicKeyToken = string.Join("", assemblyName.GetPublicKeyToken().Select(b => b.ToString("x2"))),
-                Framework = targetFrameworkName,
-                FrameworkVersion = targetFrameworkVersion,
-                Copyright = fileVersion.LegalCopyright,
-                Build = assemblyConfiguration?.ConstructorArguments?.FirstOrDefault().Value.ToString(),
-                IsDebug = fileVersion.IsDebug,
-                DebuggableModes = debuggableAttributeArguments != null ? ((DebuggableAttribute.DebuggingModes)debuggableAttributeArguments.Value).ToString() : string.Empty,
-                IsPatched = fileVersion.IsPatched,
-                IsPreRelease = fileVersion.IsPreRelease,
-                Language = fileVersion.Language,
-                OriginalFilename = fileVersion.OriginalFilename,
-                FileSize = Util.BytesToString(fileInfo.Length),
-                FileLength = fileInfo.Length,
-                FullPath = assembly.Location
-            };
+                declaredTypes = string.Join(Environment.NewLine, assembly.DefinedTypes.Select(x => BuildTypeName(x)));
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                declaredTypes = string.Join(Environment.NewLine, ex.Types.Select(x => BuildTypeName(x)));
+                declaredTypes += $"{Environment.NewLine}LOAD FAILED TYPES{Environment.NewLine}";
+                foreach(var loaderException in ex.LoaderExceptions)
+                    declaredTypes += $"{loaderException.GetBaseException().Message}{Environment.NewLine}";
+            }
+            var assemblyNames = assembly.GetReferencedAssemblies();
+            var loadedAssemblies = assemblyNames.Select(x =>
+            {
+                Assembly loadedAssembly = null;
+                try
+                {
+                    loadedAssembly = Assembly.Load(x);
+                }
+                catch (Exception) { }
+                return new { Name = x.FullName, Assembly = loadedAssembly };
+            }).ToList();
+            var dependentAssemblies = ResolvedAssemblies.Distinct().Select(x => new { Name = x.FullName, Assembly = x }).ToList();
+            var dependencies = string.Join(Environment.NewLine, dependentAssemblies.Select(x => $"{x.Name}, {x.Assembly?.Location}"));
+            var embeddedResources = assembly.GetManifestResourceNames();
 
-            if (data.FileLength < MaxHashInspectionLength)
-                ComputeHash(data, assembly.Location);
-            return data;
+            assemblyData.Name = assembly.FullName;
+            assemblyData.Filename = Path.GetFileName(assembly.Location);
+            assemblyData.ProductName = fileVersion.ProductName;
+            assemblyData.FileDescription = fileVersion.FileDescription;
+            assemblyData.Description = fileVersion.Comments;
+            assemblyData.Company = fileVersion.CompanyName;
+            assemblyData.Version = version.ToString();
+            assemblyData.FileVersion = fileVersion.FileVersion;
+            assemblyData.ProductVersion = fileVersion.ProductVersion;
+            assemblyData.IsClsCompliant = (bool?)clsCompliant?.ConstructorArguments?.FirstOrDefault().Value ?? false;
+            assemblyData.InformationalVersion = assemblyInformationalVersion?.ConstructorArguments?.FirstOrDefault().Value.ToString();
+            assemblyData.Metadata = string.Join(",", metadataKeys.Select((x, i) => $"{x}={metadataValues[i].ToString()}"));
+            assemblyData.IsStronglyNamed = assemblyName.GetPublicKeyToken().Length > 0;
+            assemblyData.PublicKeyToken = string.Join("", assemblyName.GetPublicKeyToken().Select(b => b.ToString("x2")));
+            assemblyData.Framework = targetFrameworkName;
+            assemblyData.FrameworkVersion = targetFrameworkVersion;
+            assemblyData.Copyright = fileVersion.LegalCopyright;
+            assemblyData.Build = assemblyConfiguration?.ConstructorArguments?.FirstOrDefault().Value.ToString();
+            assemblyData.IsDebug = fileVersion.IsDebug;
+            assemblyData.DebuggableModes = debuggableAttributeArguments.HasValue ? ((DebuggableAttribute.DebuggingModes)debuggableAttributeArguments.Value.Value).ToString() : string.Empty;
+            assemblyData.IsPatched = fileVersion.IsPatched;
+            assemblyData.IsPreRelease = fileVersion.IsPreRelease;
+            assemblyData.Language = fileVersion.Language;
+            assemblyData.OriginalFilename = fileVersion.OriginalFilename;
+            assemblyData.FileSize = Util.BytesToString(fileInfo.Length);
+            assemblyData.FileLength = fileInfo.Length;
+            assemblyData.FullPath = assembly.Location;
+            assemblyData.DeclaredTypes = declaredTypes;
+            assemblyData.Dependencies = dependencies;
+            assemblyData.EmbeddedResources = string.Join(Environment.NewLine, embeddedResources);
+
+            if (assemblyData.FileLength < MaxHashInspectionLength)
+                ComputeHash(assemblyData, assembly.Location);
+            return assemblyData;
+        }
+
+        private string BuildTypeName(Type type)
+        {
+            if (type == null)
+                return string.Empty;
+            if (type.IsGenericType)
+            {
+                var name = type.FullName;
+                var startPos = -1;
+                var len = 0;
+                var parameters = ((TypeInfo)type).GenericTypeParameters;
+                for (var i = 0; i < parameters.Length; i++)
+                {
+                    var key = $"`{(parameters[i].GenericParameterPosition + 1)}";
+                    var index = name.IndexOf(key);
+                    if (startPos < 0 && index >= 0)
+                        startPos = index;
+                    if (index >= 0)
+                    {
+                        len += parameters[i].Name.Length;
+                        name = name.Replace(key, parameters[i].Name);
+                    }
+                }
+                if (len > 0)
+                {
+                    name = name.Insert(startPos, "<");
+                    name = name.Insert(startPos + len + 1, ">");
+                }
+                return $"{type.FullName} ({name})";
+            }
+            return type.FullName;
         }
 
         private void ComputeHash(AssemblyData data, string filename)

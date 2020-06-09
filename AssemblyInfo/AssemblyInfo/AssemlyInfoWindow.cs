@@ -52,7 +52,7 @@ namespace AssemblyInfo
                     return false;
                 }
             }
-            catch (FileNotFoundException)
+            catch (FileNotFoundException ex)
             {
                 MessageBox.Show($"File '{Path.GetFileName(filename)}' not found!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Load += (s, e) => Close();
@@ -101,7 +101,11 @@ namespace AssemblyInfo
                 new ListViewItem(new string[] { "Path", "" }),
                 new ListViewItem(new string[] { "IsClsCompliant", "" }),
                 new ListViewItem(new string[] { "InformationalVersion", "" }),
+                new ListViewItem(new string[] { "Dependencies", "" }),
+                new ListViewItem(new string[] { "DeclaredTypes", "" }),
+                new ListViewItem(new string[] { "EmbeddedResources", "" }),
                 new ListViewItem(new string[] { "Metadata", "" }),
+                new ListViewItem(new string[] { "Messages", "" }),
             };
             listInfo.Items.AddRange(items);
         }
@@ -147,7 +151,11 @@ namespace AssemblyInfo
             listInfo.Items[24].SubItems[1].Text = Path.GetDirectoryName(assemblyData.FullPath);
             listInfo.Items[25].SubItems[1].Text = $"{assemblyData.IsClsCompliant}";
             listInfo.Items[26].SubItems[1].Text = assemblyData.InformationalVersion;
-            listInfo.Items[27].SubItems[1].Text = assemblyData.Metadata;
+            listInfo.Items[27].SubItems[1].Text = assemblyData.Dependencies;
+            listInfo.Items[28].SubItems[1].Text = assemblyData.DeclaredTypes;
+            listInfo.Items[29].SubItems[1].Text = assemblyData.EmbeddedResources;
+            listInfo.Items[30].SubItems[1].Text = assemblyData.Metadata;
+            listInfo.Items[31].SubItems[1].Text = assemblyData.Messages;
         }
 
         private void AssemlyInfoWindow_Resize(object sender, EventArgs e)

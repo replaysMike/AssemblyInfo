@@ -14,8 +14,8 @@ namespace AssemblyInfo
 
         private void InspectionWindow_Resize(object sender, EventArgs e)
         {
-            txtInspection.Width = Width - 10;
-            txtInspection.Height = Height - 10;
+            txtInspection.Width = Width - 35;
+            txtInspection.Height = Height - 60;
         }
     }
 }
