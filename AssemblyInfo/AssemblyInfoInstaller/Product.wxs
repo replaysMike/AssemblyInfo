@@ -76,8 +76,8 @@
       <Component Id="AssemblyInfo" Guid="10dccc3d-5e68-4685-a4c1-94c44188fdd4" Win64="yes">
         <File Id="AssemblyInfoEXE" Name="AssemblyInfo.exe" Source="$(var.AssemblyInfo.TargetDir)\AssemblyInfo.exe" KeyPath="yes" Checksum="yes" ProcessorArchitecture="x64" />
       </Component>
-      <Component Id="CommandLineLibrary" Guid="a1b52bdc-d261-444b-b055-5a1fcbb435cb" Win64="yes">
-        <File Id="CommandLineDLL" Name="CommandLine.dll" Source="$(var.AssemblyInfo.TargetDir)\CommandLine.dll" KeyPath="yes" ProcessorArchitecture="x64" />
+      <Component Id="AssemblyInfopdb" Guid="a1b52bdc-d261-444b-b055-5a1fcbb435cb" Win64="yes">
+        <File Id="AssemblyInfoPDB" Name="AssemblyInfo.pdb" Source="$(var.AssemblyInfo.TargetDir)\AssemblyInfo.pdb" KeyPath="yes" ProcessorArchitecture="x64" />
       </Component>
     </ComponentGroup>
   </Fragment>

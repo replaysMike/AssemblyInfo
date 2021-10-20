@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AssemblyInfoV2": {
+      "commandName": "Project",
+      "commandLineArgs": "-f \"C:\\gitrepo\\personalcode\\AnyConfig\\AnyConfig\\AnyConfig\\bin\\Release\\net5\\AnyConfig.dll\""
+    }
+  }
+}

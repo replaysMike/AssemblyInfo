@@ -224,7 +224,7 @@ namespace AssemblyInfo
                 return new { Name = x.FullName, Assembly = loadedAssembly };
             }).ToList();
             var dependentAssemblies = ResolvedAssemblies.Distinct().Select(x => new { Name = x.FullName, Assembly = x }).ToList();
-            var dependencies = string.Join(Environment.NewLine, dependentAssemblies.Select(x => $"{x.Name}, {x.Assembly?.Location}"));
+            var dependencies = string.Join(Environment.NewLine, dependentAssemblies.Select(x => $"• {x.Name}, {x.Assembly?.Location}"));
             var embeddedResources = assembly.GetManifestResourceNames();
 
             assemblyData.Name = assembly.FullName;
@@ -290,9 +290,9 @@ namespace AssemblyInfo
                     name = name.Insert(startPos, "<");
                     name = name.Insert(startPos + len + 1, ">");
                 }
-                return $"{type.FullName} ({name})";
+                return $"• {type.FullName} ({name})";
             }
-            return type.FullName;
+            return $"• {type.FullName}";
         }
 
         private void ComputeHash(AssemblyData data, string filename)

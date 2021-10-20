@@ -1,4 +1,4 @@
-﻿using CommandLine;
+using CommandLine;
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
@@ -8,15 +8,16 @@ namespace AssemblyInfo
 {
     static class Program
     {
-        [DllImport("kernel32.dll", SetLastError = true)]
+         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool FreeConsole();
 
         /// <summary>
-        /// The main entry point for the application.
+        ///  The main entry point for the application.
         /// </summary>
         [STAThread]
         static int Main(string[] args)
         {
+            //Application.SetHighDpiMode(HighDpiMode.SystemAware);
             var returnValue = 0;
             Parser.Default.ParseArguments<Options>(args)
                 .WithParsed<Options>((o) =>

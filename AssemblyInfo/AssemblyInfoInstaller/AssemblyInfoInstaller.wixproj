@@ -24,16 +24,6 @@
     <Compile Include="Product.wxs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\AssemblyInfo\AssemblyInfo.csproj">
-      <Name>AssemblyInfo</Name>
-      <Project>{9aab585f-c18c-4dc5-85fd-20902ac6732c}</Project>
-      <Private>True</Private>
-      <DoNotHarvest>True</DoNotHarvest>
-      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
-      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <WixExtension Include="WixUIExtension">
       <HintPath>$(WixExtDir)\WixUIExtension.dll</HintPath>
       <Name>WixUIExtension</Name>
@@ -43,6 +33,16 @@
     <Content Include="Banner.bmp" />
     <Content Include="Dialog.bmp" />
     <Content Include="Info.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\AssemblyInfo\AssemblyInfo.csproj">
+      <Name>AssemblyInfo</Name>
+      <Project>{23b436f2-a47e-4bd5-bf94-5d70df92f6fe}</Project>
+      <Private>True</Private>
+      <DoNotHarvest>True</DoNotHarvest>
+      <RefProjectOutputGroups>Binaries;Content;Satellites</RefProjectOutputGroups>
+      <RefTargetDir>INSTALLFOLDER</RefTargetDir>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(WixTargetsPath)" Condition=" '$(WixTargetsPath)' != '' " />
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets" Condition=" '$(WixTargetsPath)' == '' AND Exists('$(MSBuildExtensionsPath32)\Microsoft\WiX\v3.x\Wix.targets') " />

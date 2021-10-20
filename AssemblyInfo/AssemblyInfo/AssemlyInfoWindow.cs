@@ -9,7 +9,7 @@ namespace AssemblyInfo
 {
     public partial class AssemlyInfoWindow : Form
     {
-        private ContextMenu _contextMenu;
+        private ContextMenuStrip _contextMenu;
         private AssemblyData _assemblyData;
         public Options Options { get; }
 
@@ -54,7 +54,7 @@ namespace AssemblyInfo
             }
             catch (FileNotFoundException ex)
             {
-                MessageBox.Show($"File '{Path.GetFileName(filename)}' not found!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Failed to load '{Path.GetFileName(filename)}'! {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 Load += (s, e) => Close();
                 return false;
             }
@@ -63,9 +63,16 @@ namespace AssemblyInfo
 
         private void BuildUIComponents()
         {
-            _contextMenu = new ContextMenu();
-            _contextMenu.MenuItems.Add(new MenuItem("Copy", MenuItemCopy_Click, Shortcut.CtrlC));
-            listInfo.ContextMenu = _contextMenu;
+            _contextMenu = new ContextMenuStrip();
+            _contextMenu.Click += _contextMenu_Click;
+            var ts = new ToolStrip();
+            var menuItem = new ToolStripMenuItem("Copy", null, null, "Copy");
+            ts.Items.Add(menuItem);
+            _contextMenu.Items.Add(menuItem);
+            listInfo.ContextMenuStrip = _contextMenu;
+
+            //_contextMenu..MenuItems.Add(new MenuItem("Copy", MenuItemCopy_Click, Shortcut.CtrlC));
+            //listInfo.ContextMenu = _contextMenu;
             var columnHeaders = new ColumnHeader[] {
                 new ColumnHeader { Name = "Property", Text = "", Width = 110 },
                 new ColumnHeader { Name = "Value", Text = "", Width = listInfo.Width - 120 },
@@ -110,15 +117,15 @@ namespace AssemblyInfo
             listInfo.Items.AddRange(items);
         }
 
-        private void MenuItemCopy_Click(object sender, EventArgs e)
+        private void _contextMenu_Click(object sender, EventArgs e)
         {
-            var menuItem = sender as MenuItem;
-            var parent = menuItem.Parent as ContextMenu;
-            var control = parent.SourceControl as ListView;
+            var menuItem = sender as ContextMenuStrip;
+            var control = menuItem.SourceControl as ListView;
             var itemList = new List<ListViewItem>();
             foreach (ListViewItem item in control.SelectedItems)
                 itemList.Add(item);
             Clipboard.SetText(string.Join(Environment.NewLine, itemList.Select(x => $"{x.SubItems[0].Text}={x.SubItems[1].Text}")));
+
         }
 
         private void UpdateUI(AssemblyData assemblyData)
@@ -160,9 +167,12 @@ namespace AssemblyInfo
 
         private void AssemlyInfoWindow_Resize(object sender, EventArgs e)
         {
-            listInfo.Width = Width - 40;
-            listInfo.Height = Height - 60;
-            listInfo.Columns[1].Width = listInfo.Width - 120;
+            if (listInfo.Columns.Count > 0)
+            {
+                listInfo.Width = Width - 40;
+                listInfo.Height = Height - 60;
+                listInfo.Columns[1].Width = listInfo.Width - 120;
+            }
         }
 
         private void listInfo_MouseDoubleClick(object sender, MouseEventArgs e)
